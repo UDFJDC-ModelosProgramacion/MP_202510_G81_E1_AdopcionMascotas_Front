@@ -106,34 +106,6 @@ postcss.config.js      # Configuración de PostCSS
 - ESLint
 - Auto Rename Tag
 
-### Variables de Entorno (Opcional)
-Crea un archivo `.env` en la raíz del proyecto para variables de entorno:
-```env
-VITE_API_URL=http://localhost:8000/api
-```
-
-## 🚀 Despliegue
-
-### Vercel (Recomendado)
-1. Instala Vercel CLI: `npm i -g vercel`
-2. Ejecuta: `vercel`
-3. Sigue las instrucciones
-
-### Netlify
-1. Construye el proyecto: `npm run build`
-2. Arrastra la carpeta `dist` a Netlify Deploy
-
-### Otros servicios
-El proyecto es compatible con cualquier servicio que soporte aplicaciones estáticas como GitHub Pages, Firebase Hosting, etc.
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
 ## 📝 Comandos de Desarrollo Rápido
 
 ```cmd
@@ -150,25 +122,13 @@ npm run build && npm run preview
 npm run lint
 ```
 
-## 🐛 Solución de Problemas
-
-### Error: "npm command not found"
-- Instala Node.js desde [nodejs.org](https://nodejs.org/)
-
-### Error: "Port 3000 is already in use"
-- Cambia el puerto en `vite.config.js` o cierra la aplicación que usa el puerto 3000
-
-### Problemas con Tailwind CSS
-- Verifica que los archivos estén incluidos en `tailwind.config.js`
-- Asegúrate de que `@tailwind` esté importado en `src/index.css`
-
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
 
 ## 👥 Equipo de Desarrollo
 
-- **Grupo 81** - Equipo de desarrollo
+- **Grupo 81** - "Aves de Hermes"
 - **Proyecto:** MP_202510_G81_E1
 
 ---

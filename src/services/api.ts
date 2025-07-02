@@ -1,4 +1,4 @@
-import { Pet, Shelter, SuccessStory, ApiResponse, ShelterDetail, Veterinarian, Event, Arrival, PetDTO, PetDetailDTO, ShelterDTO } from '../types'
+import { Pet, Shelter, SuccessStory, ApiResponse, ShelterDetail, Veterinarian, Event, Arrival, PetDTO, PetDetailDTO, ShelterDTO, VeterinarianDetailDTO } from '../types'
 
 const API_BASE_URL = 'http://localhost:8080/api'
 
@@ -6,17 +6,17 @@ class ApiService {
   private async fetchData<T>(endpoint: string): Promise<T> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`)
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       const data: ApiResponse<T> = await response.json()
-      
+
       if (!data.success) {
         throw new Error(data.message || 'Error en la respuesta del servidor')
       }
-      
+
       return data.data
     } catch (error) {
       console.error(`Error fetching ${endpoint}:`, error)
@@ -87,16 +87,16 @@ class ApiService {
     shelterId?: number
   }): Promise<Pet[]> {
     const params = new URLSearchParams()
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
         params.append(key, value.toString())
       }
     })
-    
+
     const queryString = params.toString()
     const endpoint = queryString ? `/pets/filter?${queryString}` : '/pets'
-    
+
     return this.fetchData<Pet[]>(endpoint)
   }
 
@@ -556,6 +556,11 @@ class ApiService {
 
   // Fallback methods for new shelter detail methods
   async getShelterByIdWithFallback(id: string): Promise<Shelter> {
+    // Check for invalid IDs first
+    if (!id || id === '0' || isNaN(parseInt(id))) {
+      throw new Error(`Invalid shelter ID: ${id}`)
+    }
+    
     try {
       return await this.getShelterById(id)
     } catch (error) {
@@ -615,7 +620,7 @@ class ApiService {
     } catch (error) {
       console.warn('API no disponible, usando datos mock:', error)
       // Return a subset of success stories for this shelter
-      return this.getMockSuccessStories().filter(() => 
+      return this.getMockSuccessStories().filter(() =>
         // Mock logic: assume all stories belong to shelter 1 for now
         parseInt(shelterId) === 1
       )
@@ -634,11 +639,21 @@ class ApiService {
 
   // Pet detail with fallback
   async getPetDetailWithFallback(shelterId: string, petId: string): Promise<PetDetailDTO> {
+    // Check for invalid IDs first
+    if (!shelterId || !petId || shelterId === '0' || petId === '0' || 
+        isNaN(parseInt(shelterId)) || isNaN(parseInt(petId))) {
+      throw new Error(`Invalid shelter ID (${shelterId}) or pet ID (${petId})`)
+    }
+    
     try {
       return await this.getPetDetail(shelterId, petId)
     } catch (error) {
       console.warn('API no disponible, usando datos mock:', error)
-      return this.getMockPetDetail(parseInt(petId))
+      const mockPet = this.getMockPetDetail(parseInt(petId))
+      if (!mockPet || mockPet.id === 0) {
+        throw new Error(`Pet with id ${petId} not found in shelter ${shelterId}`)
+      }
+      return mockPet
     }
   }
 
@@ -757,8 +772,138 @@ class ApiService {
         },
       },
     }
-    
+
     return mockPetDetails[petId] || mockPetDetails[1]
+  }
+
+  // Obtener detalle de veterinario por ID
+  async getVeterinarianDetail(veterinarianId: string): Promise<VeterinarianDetailDTO> {
+    return this.fetchData<VeterinarianDetailDTO>(`/veterinarians/${veterinarianId}`)
+  }
+
+  // Veterinarian detail with fallback
+  async getVeterinarianDetailWithFallback(veterinarianId: string): Promise<VeterinarianDetailDTO> {
+    // Check for invalid IDs first
+    if (!veterinarianId || veterinarianId === '0' || isNaN(parseInt(veterinarianId))) {
+      throw new Error(`Invalid veterinarian ID: ${veterinarianId}`)
+    }
+    
+    try {
+      return await this.getVeterinarianDetail(veterinarianId)
+    } catch (error) {
+      console.warn('API no disponible, usando datos mock:', error)
+      const mockVet = this.getMockVeterinarianDetail(parseInt(veterinarianId))
+      if (!mockVet || mockVet.id === 0) {
+        throw new Error(`Veterinarian with id ${veterinarianId} not found`)
+      }
+      return mockVet
+    }
+  }
+
+  // Mock data for veterinarian detail
+  private getMockVeterinarianDetail(veterinarianId: number): VeterinarianDetailDTO {
+    const mockVeterinarianDetails: { [key: number]: VeterinarianDetailDTO } = {
+      1: {
+        id: 1,
+        name: "María González",
+        phone: "+57 301 111 2222",
+        email: "maria.gonzalez@refugioesperanza.org",
+        licenseNumber: "VET-2018-001",
+        speciality: "GENERAL",
+        disponibilities: ["MORNING", "AFTERNOON"],
+
+        medicalEvents: [
+          {
+            id: 1,
+            date: new Date("2024-01-20"),
+            type: "CHECKUP",
+            description: "Revisión general de salud - Luna",
+            veterinarian: "Dr. María González",
+            diagnosis: "Excelente estado de salud",
+            treatment: "Continuar con rutina de ejercicio y alimentación",
+            nextAppointment: new Date("2024-04-20"),
+          },
+          {
+            id: 2,
+            date: new Date("2024-01-18"),
+            type: "VACCINATION",
+            description: "Refuerzo de vacunas anuales - Max",
+            veterinarian: "Dr. María González",
+            diagnosis: "Vacunación completa",
+            treatment: "Observación por 24 horas post-vacunación",
+          },
+        ],
+
+        adoptionApplications: [
+          {
+            id: 1,
+            applicationDate: new Date("2024-01-15"),
+            applicationEnd: new Date("2024-01-20"),
+            observations: "Familia con experiencia previa en perros grandes. Casa con jardín amplio.",
+            applicationStatus: "APPROVED",
+            result: "APPROVED",
+            applicant: {
+              id: 1,
+              name: "María García",
+              email: "maria.garcia@email.com",
+              phone: "+57 300 111 2222",
+              houseType: "HOUSE",
+              address: "Carrera 15 #23-45, Bogotá",
+              hasExperience: true,
+              motivation: "Busco una compañera para mi familia, tenemos experiencia con perros grandes.",
+            },
+            evaluationNotes: "Excelente candidata. Familia responsable con experiencia previa.",
+            homeVisitDate: new Date("2024-01-18"),
+            homeVisitResult: "APPROVED",
+          },
+        ],
+
+        followUps: [
+          {
+            id: 1,
+            petName: "Rocky",
+            petId: 4,
+            ownerName: "Carlos Mendoza",
+            adoptionDate: new Date("2023-12-01"),
+            followUpDate: new Date("2024-01-15"),
+            status: "EXCELLENT",
+            notes: "Mascota completamente adaptada, excelente cuidado",
+            nextFollowUp: new Date("2024-04-15"),
+            monthsPostAdoption: 1.5,
+          },
+        ],
+
+        adoptionTests: [
+          {
+            id: 1,
+            petName: "Luna",
+            petId: 1,
+            applicantName: "María García",
+            testDate: new Date("2024-01-16"),
+            testType: "BEHAVIORAL",
+            result: "PASSED",
+            score: 85,
+            notes: "Excelente interacción, mascota muy receptiva",
+            recommendations: "Continuar con proceso de adopción",
+          },
+        ],
+
+        shelterArrivals: [
+          {
+            id: 1,
+            arrivalDate: new Date("2023-08-10"),
+            reason: "ABANDONMENT",
+            condition: "GOOD",
+            rescuer: "Ciudadano anónimo",
+            notes: "Encontrada en la calle, bien alimentada pero sin collar",
+            initialWeight: 20.5,
+            currentWeight: 22.3,
+          },
+        ],
+      },
+    }
+
+    return mockVeterinarianDetails[veterinarianId] || mockVeterinarianDetails[1]
   }
 }
 

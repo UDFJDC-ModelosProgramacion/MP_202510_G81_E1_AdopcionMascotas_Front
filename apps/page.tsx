@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Pet, Shelter, SuccessStory } from '../src/types'
 import { apiService } from '../src/services/api'
 import { 
@@ -115,13 +116,13 @@ export default function HomePage() {
                 <PawPrint className="h-4 w-4 mr-1" />
                 Mascotas
               </a>
-              <a
-                href="/shelter"
+              <Link
+                to="/shelter"
                 className="text-orange-700 hover:text-orange-900 font-medium flex items-center transition-colors"
               >
                 <MapPin className="h-4 w-4 mr-1" />
                 Refugios
-              </a>
+              </Link>
               <a
                 href="#historias"
                 className="text-orange-700 hover:text-orange-900 font-medium flex items-center transition-colors"
@@ -129,11 +130,19 @@ export default function HomePage() {
                 <Award className="h-4 w-4 mr-1" />
                 Historias
               </a>
-              <button
+              <Link
+                to="/adoption/dashboard"
+                className="text-orange-700 hover:text-orange-900 font-medium flex items-center transition-colors"
+              >
+                <Heart className="h-4 w-4 mr-1" />
+                Mis Adopciones
+              </Link>
+              <Link
+                to="/register"
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
               >
                 Adoptar Ahora
-              </button>
+              </Link>
             </nav>
           </div>
         </div>
@@ -331,10 +340,13 @@ export default function HomePage() {
                         <p className="text-sm text-orange-600 mb-4 line-clamp-3">
                           {pet.behaviorProfile}
                         </p>
-                        <button className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center">
+                        <Link 
+                          to={`/shelter/${pet.shelter.id}/pet/${pet.id}`}
+                          className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center"
+                        >
                           <Heart className="h-4 w-4 mr-2" />
                           Conocer a {pet.name}
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   ))}
@@ -388,10 +400,13 @@ export default function HomePage() {
                       <p className="text-sm text-orange-600 mb-4">
                         {shelter.description}
                       </p>
-                      <button className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center">
+                      <Link 
+                        to={`/shelter/${shelter.id}`}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center"
+                      >
                         <MapPin className="h-4 w-4 mr-2" />
                         Visitar Refugio
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -492,6 +507,31 @@ export default function HomePage() {
                 <li><a href="#mascotas" className="hover:text-white transition-colors">Mascotas</a></li>
                 <li><a href="#refugios" className="hover:text-white transition-colors">Refugios</a></li>
                 <li><a href="#historias" className="hover:text-white transition-colors">Historias</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Pruebas de Error</h4>
+              <ul className="space-y-2 text-orange-200 text-sm">
+                <li>
+                  <Link to="/shelter/0" className="hover:text-white transition-colors">
+                    Refugio no existe (ID: 0)
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/shelter/999" className="hover:text-white transition-colors">
+                    Refugio inexistente (ID: 999)
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/shelter/1/pet/0" className="hover:text-white transition-colors">
+                    Mascota no existe (ID: 0)
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/veterinarian/0" className="hover:text-white transition-colors">
+                    Veterinario no existe (ID: 0)
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>

@@ -138,14 +138,17 @@ export interface PetDetailDTO extends PetDTO {
   shelterArrival?: ShelterArrivalDTO
 }
 
-// Additional DTOs for Pet Detail
-export interface OwnerDTO {
-  id: number
-  name: string
-  email: string
-  phone: string
-  address?: string
-  adoptionDate?: Date
+// Additional DTOs for Pet Detail  
+export interface OwnerDTO extends PersonDTO {
+  houseType: HouseTypeEnum
+  address: string
+}
+
+export interface OwnerDetailDTO extends OwnerDTO {
+  adoptions: AdoptionDTO[]
+  adoptionTests: AdoptionTestDTO[]
+  adoptionApplications: AdoptionApplicationDTO[]
+  pets: PetDTO[]
 }
 
 export interface AdoptionApplicationDTO {
@@ -275,4 +278,83 @@ export interface ShelterEventDTO {
   date: Date
   status?: 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
   shelter: ShelterDTO
+}
+
+// Veterinarian DTOs based on backend structure
+export interface SpecialityEnum {
+  GENERAL: "Medicina General"
+  SURGERY: "Cirugía"
+  DERMATOLOGY: "Dermatología"
+  OPHTHALMOLOGY: "Oftalmología"
+  CARDIOLOGY: "Cardiología"
+  NEUROLOGY: "Neurología"
+  ONCOLOGY: "Oncología"
+  INTERNAL_MEDICINE: "Medicina Interna"
+  INFECTOLOGY: "Infectología"
+  ORTHOPEDICS: "Ortopedia"
+  REPRODUCTION: "Reproducción"
+  NUTRITION: "Nutrición"
+  BEHAVIOR: "Comportamiento"
+  PHYSIOTHERAPY: "Fisioterapia"
+}
+
+export type Speciality = keyof SpecialityEnum
+
+export interface VeterinarianDTO extends PersonDTO {
+  id: number
+  licenseNumber: string
+  speciality: Speciality
+  disponibilities: DisponibilityEnum[]
+}
+
+export interface VeterinarianDetailDTO extends VeterinarianDTO {
+  medicalEvents: MedicalEventDTO[]
+  adoptionApplications: AdoptionApplicationDTO[]
+  followUps: AdoptionFollowUpDTO[]
+  adoptionTests: AdoptionTestDTO[]
+  shelterArrivals: ShelterArrivalDTO[]
+}
+
+// Additional DTOs for Veterinarian Detail
+export interface AdoptionFollowUpDTO {
+  id: number
+  petName: string
+  petId: number
+  ownerName: string
+  adoptionDate: Date
+  followUpDate: Date
+  status: 'EXCELLENT' | 'GOOD' | 'POOR' | 'CRITICAL'
+  notes: string
+  nextFollowUp: Date
+  monthsPostAdoption: number
+}
+
+export interface AdoptionTestDTO {
+  id: number
+  petName: string
+  petId: number
+  applicantName: string
+  testDate: Date
+  testType: 'BEHAVIORAL' | 'COMPATIBILITY' | 'MEDICAL' | 'HOME_VISIT'
+  result: 'PASSED' | 'FAILED' | 'PENDING'
+  score: number
+  notes: string
+  recommendations: string
+}
+
+// Enums
+export type DisponibilityEnum = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'FULL_TIME'
+
+// House Type Enum for OwnerDTO
+export type HouseTypeEnum = 'APARTMENT' | 'HOUSE' | 'FARM' | 'TOWNHOUSE'
+
+// Base Person DTO
+export interface PersonDTO {
+  id: number
+  name: string
+  email: string
+  phone: string
+  documentType?: string
+  documentNumber?: string
+  birthDate?: string
 }

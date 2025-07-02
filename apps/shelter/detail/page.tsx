@@ -7,6 +7,7 @@ import { Button } from '../../../src/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../src/components/ui/card'
 import { Badge } from '../../../src/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../src/components/ui/tabs'
+import NotFoundPage from '../../components/NotFoundPage'
 import api from '../../../src/services/api'
 import type { Shelter, Pet, Veterinarian, Event, Arrival, SuccessStory } from '../../../src/types'
 
@@ -19,26 +20,20 @@ export default function ShelterDetailPage() {
   const [arrivals, setArrivals] = useState<Arrival[]>([])
   const [successStories, setSuccessStories] = useState<SuccessStory[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('pets')
-
-  const handlePetClick = (pet: Pet) => {
-    setSelectedPet(pet)
-    setDialogOpen(true)
-  }
-
-  const closeDialog = () => {
-    setDialogOpen(false)
-    setSelectedPet(null)
-  }
 
   useEffect(() => {
     const loadShelterData = async () => {
-      if (!id) return
+      if (!id || id === '0') {
+        setError('invalid-id')
+        setLoading(false)
+        return
+      }
       
       try {
         setLoading(true)
+        setError(null)
         const [
           shelterData,
           petsData,
@@ -55,6 +50,11 @@ export default function ShelterDetailPage() {
           api.getSuccessStoriesByShelterWithFallback(id)
         ])
 
+        if (!shelterData || shelterData.id === 0) {
+          setError('not-found')
+          return
+        }
+
         setShelter(shelterData)
         setPets(petsData)
         setVeterinarians(veterinariansData)
@@ -63,6 +63,7 @@ export default function ShelterDetailPage() {
         setSuccessStories(successStoriesData)
       } catch (error) {
         console.error('Error loading shelter data:', error)
+        setError('server-error')
       } finally {
         setLoading(false)
       }
@@ -94,98 +95,44 @@ export default function ShelterDetailPage() {
     )
   }
 
-  if (!shelter) {
+  if (error === 'invalid-id') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Refugio no encontrado</h1>
-          <Link to="/shelter">
-            <Button>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver a refugios
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <NotFoundPage
+        title="ID Inválido"
+        description="El ID del refugio proporcionado no es válido. Por favor, verifica la URL e intenta nuevamente."
+        backLink="/shelter"
+        backText="Ver todos los refugios"
+        gradient="from-blue-50 to-indigo-100"
+      />
+    )
+  }
+
+  if (error === 'not-found' || !shelter) {
+    return (
+      <NotFoundPage
+        title="Refugio no encontrado"
+        description="El refugio que buscas no existe o ha sido eliminado. Te sugerimos explorar otros refugios disponibles."
+        backLink="/shelter"
+        backText="Ver todos los refugios"
+        gradient="from-blue-50 to-indigo-100"
+      />
+    )
+  }
+
+  if (error === 'server-error') {
+    return (
+      <NotFoundPage
+        title="Error del servidor"
+        description="Ocurrió un problema al cargar la información del refugio. Por favor, intenta nuevamente más tarde."
+        backLink="/shelter"
+        backText="Ver todos los refugios"
+        gradient="from-red-50 to-red-100"
+      />
     )
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Pet Detail Modal */}
-      {dialogOpen && selectedPet && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="fixed inset-0 bg-black/50" 
-            onClick={closeDialog}
-          />
-          <div className="relative bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedPet.name}</h2>
-                  <p className="text-gray-600">{selectedPet.breed} • {calculateAge(selectedPet.birthDate)} años • {selectedPet.gender}</p>
-                </div>
-                <button 
-                  onClick={closeDialog}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <img
-                    src={selectedPet.image || '/placeholder-pet.jpg'}
-                    alt={selectedPet.name}
-                    className="w-full h-60 object-cover rounded-lg"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Información</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Tamaño:</span>
-                        <span>{selectedPet.size}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Género:</span>
-                        <span>{selectedPet.gender}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Vacunado:</span>
-                        <span>{selectedPet.vaccinated ? '✓ Sí' : '✗ No'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Esterilizado:</span>
-                        <span>{selectedPet.sterilized ? '✓ Sí' : '✗ No'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4">
-                <h4 className="font-semibold mb-2">Perfil de Comportamiento</h4>
-                <p className="text-sm text-gray-600">{selectedPet.behaviorProfile}</p>
-              </div>
-              
-              <div className="mt-6 flex gap-4">
-                <Button className="flex-1 bg-green-600 hover:bg-green-700">
-                  <Heart className="mr-2 h-4 w-4" />
-                  Adoptar a {selectedPet.name}
-                </Button>
-                <Button variant="outline" onClick={closeDialog}>
-                  Cerrar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -288,9 +235,11 @@ export default function ShelterDetailPage() {
                     </div>
                     <Button 
                       className="w-full"
-                      onClick={() => handlePetClick(pet)}
+                      asChild
                     >
-                      Ver detalles
+                      <Link to={`/shelter/${id}/pet/${pet.id}`}>
+                        Ver detalles
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -308,36 +257,42 @@ export default function ShelterDetailPage() {
           <TabsContent value="veterinarians" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {veterinarians.map((vet) => (
-                <Card key={vet.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Users className="h-8 w-8 text-blue-600" />
+                <Link 
+                  key={vet.id} 
+                  to={`/veterinarian/${vet.id}`}
+                  className="block hover:shadow-lg transition-shadow"
+                >
+                  <Card className="h-full">
+                    <CardHeader>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Users className="h-8 w-8 text-blue-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Dr. {vet.name}</CardTitle>
+                          <CardDescription>{vet.speciality.name}</CardDescription>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-lg">Dr. {vet.name}</CardTitle>
-                        <CardDescription>{vet.speciality.name}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center">
+                          <Phone className="mr-2 h-4 w-4 text-gray-400" />
+                          {vet.phone}
+                        </div>
+                        <div className="flex items-center">
+                          <Mail className="mr-2 h-4 w-4 text-gray-400" />
+                          {vet.email}
+                        </div>
+                        <div className="mt-4">
+                          <Badge variant="outline">
+                            {vet.yearsExperience} años de experiencia
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center">
-                        <Phone className="mr-2 h-4 w-4 text-gray-400" />
-                        {vet.phone}
-                      </div>
-                      <div className="flex items-center">
-                        <Mail className="mr-2 h-4 w-4 text-gray-400" />
-                        {vet.email}
-                      </div>
-                      <div className="mt-4">
-                        <Badge variant="outline">
-                          {vet.yearsExperience} años de experiencia
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
             {veterinarians.length === 0 && (

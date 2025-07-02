@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '../../src/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../src/components/ui/card'
 import { Badge } from '../../src/components/ui/badge'
@@ -12,6 +13,13 @@ export default function SheltersPage() {
   const [loading, setLoading] = useState(true)
   const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false)
   const [isShelterRegistrationOpen, setIsShelterRegistrationOpen] = useState(false)
+  const [isSubmittingShelter, setIsSubmittingShelter] = useState(false)
+  const [shelterFormData, setShelterFormData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    email: ''
+  })
 
   useEffect(() => {
     loadShelters()
@@ -24,9 +32,40 @@ export default function SheltersPage() {
       setShelters(sheltersData)
     } catch (error) {
       console.error('Error loading shelters:', error)
+      setShelters([])
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleShelterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      setIsSubmittingShelter(true)
+      const newShelter = await apiService.createShelter(shelterFormData)
+      
+      // Add the new shelter to the list
+      setShelters(prev => [...prev, newShelter])
+      
+      // Reset form and close dialog
+      setShelterFormData({ name: '', address: '', phone: '', email: '' })
+      setIsShelterRegistrationOpen(false)
+      
+      alert('¡Refugio registrado exitosamente!')
+    } catch (error) {
+      console.error('Error creating shelter:', error)
+      alert('Error al registrar el refugio. Por favor intenta de nuevo.')
+    } finally {
+      setIsSubmittingShelter(false)
+    }
+  }
+
+  const handleShelterInputChange = (field: string, value: string) => {
+    setShelterFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   const handleBackToHome = () => {
@@ -176,10 +215,14 @@ export default function SheltersPage() {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {shelters.map((shelter) => (
-              <Card
-                key={shelter.id}
-                className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-orange-200 group hover:border-orange-300 hover:-translate-y-1"
+              <Link 
+                key={shelter.id} 
+                to={`/shelter/${shelter.id}`}
+                className="block"
               >
+                <Card
+                  className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-orange-200 group hover:border-orange-300 hover:-translate-y-1 cursor-pointer"
+                >
                 <div className="relative overflow-hidden">
                   <img
                     src={shelter.coverImage || shelter.image || "/placeholder.svg?height=200&width=600"}
@@ -256,6 +299,7 @@ export default function SheltersPage() {
                   </Button>
                 </CardContent>
               </Card>
+              </Link>
             ))}
           </div>
         </div>
@@ -518,61 +562,80 @@ export default function SheltersPage() {
 
           <div className="space-y-6">
             {/* Registration Form */}
-            <Card className="border-orange-200">
-              <CardHeader>
-                <CardTitle className="text-orange-800 flex items-center">
-                  <MapPin className="mr-2 h-5 w-5" />
-                  Información del Refugio
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleShelterSubmit}>
+              <Card className="border-orange-200">
+                <CardHeader>
+                  <CardTitle className="text-orange-800 flex items-center">
+                    <MapPin className="mr-2 h-5 w-5" />
+                    Información del Refugio
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Refugio *</label>
+                      <input
+                        type="text"
+                        required
+                        value={shelterFormData.name}
+                        onChange={(e) => handleShelterInputChange('name', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Ej: Refugio Esperanza"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono de Contacto *</label>
+                      <input
+                        type="tel"
+                        required
+                        value={shelterFormData.phone}
+                        onChange={(e) => handleShelterInputChange('phone', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="+57 300 123 4567"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Refugio *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Dirección Completa *</label>
                     <input
                       type="text"
+                      required
+                      value={shelterFormData.address}
+                      onChange={(e) => handleShelterInputChange('address', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder="Ej: Refugio Esperanza"
+                      placeholder="Calle 45 #12-34, Ciudad, Departamento"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono de Contacto *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email de Contacto *</label>
                     <input
-                      type="tel"
+                      type="email"
+                      required
+                      value={shelterFormData.email}
+                      onChange={(e) => handleShelterInputChange('email', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder="+57 300 123 4567"
+                      placeholder="contacto@refugio.org"
                     />
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Dirección Completa *</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Calle 45 #12-34, Ciudad, Departamento"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email de Contacto *</label>
-                  <input
-                    type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="contacto@refugio.org"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Descripción del Refugio *</label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Describe la misión, historia y servicios de tu refugio..."
-                  />
-                </div>
-              </CardContent>
-            </Card>
+              <div className="flex justify-end space-x-3 pt-4 border-t mt-6">
+                <Button type="button" variant="outline" onClick={() => setIsShelterRegistrationOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmittingShelter}
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  {isSubmittingShelter ? 'Registrando...' : 'Registrar Refugio'}
+                </Button>
+              </div>
+            </form>
 
             {/* Contact Information */}
             <Card className="bg-gradient-to-r from-orange-600 to-amber-600 text-white">
@@ -595,16 +658,6 @@ export default function SheltersPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsShelterRegistrationOpen(false)}>
-              Cancelar
-            </Button>
-            <Button className="bg-orange-600 hover:bg-orange-700 text-white">
-              <Users className="mr-2 h-4 w-4" />
-              Enviar Solicitud
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
